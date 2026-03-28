@@ -207,6 +207,8 @@ export default function AdminDashboard() {
       </Card>
 
       {/* Student List */}
+      <div ref={studentListRef}>
+      {showStudentList && (
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
