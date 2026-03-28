@@ -21,7 +21,7 @@ export default function AdminDashboard() {
   const [showStudentList, setShowStudentList] = useState(false);
   const stats = getAllStudentsStats();
   const todayCount = attendance.filter((a) => a.date === new Date().toISOString().split("T")[0]).length;
-  const studentListRef = React.useRef<HTMLDivElement>(null);
+  const studentListRef = useRef<HTMLDivElement>(null);
 
   const scrollToStudents = () => {
     setShowStudentList(true);
