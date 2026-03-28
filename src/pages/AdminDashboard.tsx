@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useAttendance } from "@/lib/attendance-context";
 import { getAllStudentsStats, TOTAL_SESSIONS } from "@/lib/mock-data";
@@ -18,8 +18,15 @@ export default function AdminDashboard() {
   const [adminLocation, setAdminLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
 
+  const [showStudentList, setShowStudentList] = useState(false);
   const stats = getAllStudentsStats();
   const todayCount = attendance.filter((a) => a.date === new Date().toISOString().split("T")[0]).length;
+  const studentListRef = useRef<HTMLDivElement>(null);
+
+  const scrollToStudents = () => {
+    setShowStudentList(true);
+    setTimeout(() => studentListRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+  };
 
   useEffect(() => {
     const t = setInterval(() => setTimeLeft(getTimeRemaining()), 1000);
@@ -69,7 +76,7 @@ export default function AdminDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:border-primary/50 transition-colors" onClick={scrollToStudents}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
@@ -82,7 +89,7 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:border-primary/50 transition-colors" onClick={scrollToStudents}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl gradient-accent flex items-center justify-center">
@@ -95,7 +102,7 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:border-primary/50 transition-colors" onClick={scrollToStudents}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
@@ -200,6 +207,8 @@ export default function AdminDashboard() {
       </Card>
 
       {/* Student List */}
+      <div ref={studentListRef}>
+      {showStudentList && (
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -238,6 +247,8 @@ export default function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
+      )}
+      </div>
     </div>
   );
 }
