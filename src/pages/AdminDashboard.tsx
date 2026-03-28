@@ -76,7 +76,7 @@ export default function AdminDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:border-primary/50 transition-colors" onClick={scrollToStudents}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:border-primary/50 transition-colors" onClick={scrollToStudents}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl gradient-accent flex items-center justify-center">
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="glass-card">
+        <Card className="glass-card cursor-pointer hover:border-primary/50 transition-colors" onClick={scrollToStudents}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
@@ -113,6 +113,9 @@ export default function AdminDashboard() {
                 <p className="text-xs text-muted-foreground">Total Sessions</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      </div>
           </CardContent>
         </Card>
       </div>
