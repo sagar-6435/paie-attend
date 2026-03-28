@@ -18,8 +18,15 @@ export default function AdminDashboard() {
   const [adminLocation, setAdminLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
 
+  const [showStudentList, setShowStudentList] = useState(false);
   const stats = getAllStudentsStats();
   const todayCount = attendance.filter((a) => a.date === new Date().toISOString().split("T")[0]).length;
+  const studentListRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollToStudents = () => {
+    setShowStudentList(true);
+    setTimeout(() => studentListRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+  };
 
   useEffect(() => {
     const t = setInterval(() => setTimeLeft(getTimeRemaining()), 1000);
