@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useAttendance } from "@/lib/attendance-context";
 import { getAllStudentsStats, TOTAL_SESSIONS } from "@/lib/mock-data";
