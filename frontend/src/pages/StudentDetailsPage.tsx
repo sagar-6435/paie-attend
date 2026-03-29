@@ -17,7 +17,8 @@ import {
   TrendingUp,
   Mail,
   RefreshCw,
-  Trophy
+  Trophy,
+  Edit
 } from "lucide-react";
 import { motion } from "framer-motion";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -81,6 +82,15 @@ export default function StudentDetailsPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Student Overview</h1>
             <p className="text-muted-foreground text-xs uppercase tracking-widest font-bold">Analytics & Performance</p>
+          </div>
+          <div className="ml-auto">
+            <Button 
+               onClick={() => navigate(`/students/${id}/edit`)}
+               className="gradient-primary text-primary-foreground flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Manage Profile
+            </Button>
           </div>
         </div>
 

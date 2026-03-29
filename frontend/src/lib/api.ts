@@ -30,6 +30,11 @@ const apiCall = async <T>(
     const data = await response.json();
 
     if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.reload();
+      }
       return { error: data.error || 'An error occurred' };
     }
 

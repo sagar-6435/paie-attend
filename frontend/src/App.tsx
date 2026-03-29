@@ -13,6 +13,7 @@ import StudentsPage from "./pages/StudentsPage";
 import AttendanceLogsPage from "./pages/AttendanceLogsPage";
 import StudentDetailsPage from "./pages/StudentDetailsPage";
 import ProfilePage from "./pages/ProfilePage";
+import ManageStudentProfile from "./pages/ManageStudentProfile";
 import AttendanceHistoryPage from "./pages/AttendanceHistoryPage";
 import LabManagementPage from "./pages/LabManagementPage";
 import ManualAttendancePage from "./pages/ManualAttendancePage";
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/students" element={<StudentsPage />} />
               <Route path="/students/:id" element={<StudentDetailsPage />} />
+              <Route path="/students/:id/edit" element={<ManageStudentProfile />} />
               <Route path="/attendance-logs" element={<AttendanceLogsPage />} />
               <Route path="/my-history" element={<AttendanceHistoryPage />} />
               <Route path="/profile" element={<ProfilePage />} />

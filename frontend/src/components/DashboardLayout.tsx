@@ -23,7 +23,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shadow-md border border-primary/10">
               <img src="/favicon.png" alt="PAIE Logo" className="w-full h-full object-contain" />
             </div>
-            <span className="font-black text-xl tracking-tighter">PAIE-<span className="text-primary">Attend</span></span>
+            <span className="font-black text-xl tracking-tighter text-sidebar-foreground">PAIE-<span className="text-primary">Attend</span></span>
           </div>
         </div>
 
@@ -151,7 +151,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center p-1 shadow-sm border border-primary/10">
               <img src="/favicon.png" alt="PAIE Logo" className="w-full h-full object-contain" />
             </div>
-              <span className="font-black text-sm tracking-tight">PAIE-<span className="text-primary">Attend</span></span>
+              <span className="font-black text-sm tracking-tight text-foreground">PAIE-<span className="text-primary">Attend</span></span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full gradient-accent flex items-center justify-center text-[10px] font-bold text-accent-foreground">

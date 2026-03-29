@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Download, FileText, CheckCircle2, TrendingUp, Loader2, UserPlus, Trash2, UsersIcon } from "lucide-react";
+import { Users, Search, Download, FileText, CheckCircle2, TrendingUp, Loader2, UserPlus, Trash2, UsersIcon, Edit } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Navigate, useNavigate } from "react-router-dom";
@@ -266,7 +266,20 @@ export default function StudentsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-bold truncate group-hover:text-primary transition-colors">{s.name}</p>
-                          <Badge variant="outline" className="font-mono text-[10px] bg-muted/50">{s.rollNumber || 'N/A'}</Badge>
+                          <div className="flex items-center gap-1">
+                             <Button 
+                               size="icon" 
+                               variant="ghost" 
+                               className="h-7 w-7 rounded-lg hover:bg-primary/10 hover:text-primary transition-all opacity-0 group-hover:opacity-100"
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 navigate(`/students/${s.id}/edit`);
+                               }}
+                             >
+                               <Edit className="w-3.5 h-3.5" />
+                             </Button>
+                             <Badge variant="outline" className="font-mono text-[10px] bg-muted/50">{s.rollNumber || 'N/A'}</Badge>
+                          </div>
                         </div>
                         <div className="flex items-center gap-3 mt-1">
                           <div className="flex-1">
