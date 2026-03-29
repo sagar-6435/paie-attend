@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Users, Search, Download, FileText, CheckCircle2, TrendingUp, Loader2, UserPlus, Users as UsersIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { 
   Dialog, 
   DialogContent, 
@@ -25,6 +25,7 @@ import { toast } from "sonner";
 
 export default function StudentsPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const { attendance } = useAttendance();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddingStudent, setIsAddingStudent] = useState(false);
@@ -245,7 +246,8 @@ export default function StudentsPage() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.03 }}
-                      className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5 group"
+                      onClick={() => navigate(`/students/${s.id}`)}
+                      className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border/50 hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5 group cursor-pointer"
                     >
                       <div className="w-12 h-12 rounded-2xl flex-shrink-0 gradient-accent flex items-center justify-center text-accent-foreground font-bold shadow-soft transition-transform group-hover:scale-110">
                         {s.name.charAt(0)}

@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { QrCode, LayoutDashboard, LogOut, Shield, GraduationCap, Users, ClipboardList } from "lucide-react";
+import { QrCode, LayoutDashboard, LogOut, Shield, GraduationCap, Users, ClipboardList, User, History } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
@@ -70,6 +70,32 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </button>
             </>
           )}
+
+          {user?.role === "student" && (
+            <button 
+              onClick={() => navigate("/my-history")}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                location.pathname === "/my-history" 
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+              }`}
+            >
+              <History className="w-4 h-4" />
+              My History
+            </button>
+          )}
+
+          <button 
+            onClick={() => navigate("/profile")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname === "/profile" 
+                ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+            }`}
+          >
+            <User className="w-4 h-4" />
+            My Profile
+          </button>
         </nav>
 
         <div className="p-3 border-t border-sidebar-border">

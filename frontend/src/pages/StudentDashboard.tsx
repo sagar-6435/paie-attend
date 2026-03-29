@@ -1,15 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useAttendance } from "@/lib/attendance-context";
-import { getStudentAttendance, getStudentAttendancePercentage, TOTAL_SESSIONS } from "@/lib/mock-data";
 import { qrSessionApi } from "@/lib/api";
 import { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Send, CheckCircle2, XCircle, Calendar, FileText, TrendingUp, X, BookOpen, GraduationCap, RefreshCw } from "lucide-react";
+import { Camera, Send, CheckCircle2, XCircle, X, BookOpen, GraduationCap, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -28,8 +26,6 @@ export default function StudentDashboard() {
   const qrReaderRef = useRef<HTMLDivElement>(null);
 
   if (!user) return null;
-  const myAttendance = getStudentAttendance(user.id);
-  const percentage = getStudentAttendancePercentage(user.id);
 
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
@@ -254,50 +250,6 @@ export default function StudentDashboard() {
         <p className="text-muted-foreground">Welcome, {user.name} ({user.rollNumber})</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="glass-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{percentage}%</p>
-                <p className="text-xs text-muted-foreground">Attendance</p>
-              </div>
-            </div>
-            <Progress value={percentage} className="mt-3 h-2" />
-          </CardContent>
-        </Card>
-        <Card className="glass-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl gradient-accent flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-accent-foreground" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{myAttendance.length}/{TOTAL_SESSIONS}</p>
-                <p className="text-xs text-muted-foreground">Sessions Attended</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="glass-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
-                <FileText className="w-5 h-5 text-secondary-foreground" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{myAttendance.length}</p>
-                <p className="text-xs text-muted-foreground">Work Submissions</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Scan QR */}
       <Card className="glass-card">
         <CardHeader>
@@ -400,34 +352,6 @@ export default function StudentDashboard() {
               <span className="text-sm">{submitResult.success ? "Attendance marked!" : submitResult.error}</span>
             </motion.div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* History */}
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>Submission History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {myAttendance.length === 0 ? (
-              <p className="text-muted-foreground text-sm text-center py-6">No attendance records yet.</p>
-            ) : (
-              [...myAttendance].reverse().map((record, i) => (
-                <motion.div key={record.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                  <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center text-primary-foreground text-xs font-bold mt-0.5">
-                    {i + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-xs">{record.date}</Badge>
-                    </div>
-                    <p className="text-sm mt-1">{record.workDone}</p>
-                  </div>
-                </motion.div>
-              ))
-            )}
-          </div>
         </CardContent>
       </Card>
     </div>

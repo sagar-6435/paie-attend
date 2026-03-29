@@ -66,14 +66,24 @@ router.patch('/:id', authenticate, async (req, res) => {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
-    const { name, rollNumber } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { name, rollNumber },
-      { new: true }
-    ).select('-password');
+    const { name, rollNumber, password } = req.body;
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
-    res.json(user);
+    if (name) user.name = name;
+    if (rollNumber) user.rollNumber = rollNumber;
+    if (password) user.password = password; // Will be hashed by pre-save hook
+
+    await user.save();
+    
+    // Return user without password
+    const updatedUser = user.toObject();
+    delete updatedUser.password;
+
+    res.json(updatedUser);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
