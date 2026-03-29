@@ -71,6 +71,10 @@ export const usersApi = {
       method: 'PATCH',
       body: JSON.stringify(data),
     }),
+  delete: (id: string) =>
+    apiCall(`/users/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 // QR Sessions API

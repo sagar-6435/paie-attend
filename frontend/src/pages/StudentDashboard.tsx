@@ -70,8 +70,12 @@ export default function StudentDashboard() {
         scannerRef.current = html5QrCode;
 
         const config = { 
-          fps: 10, 
-          qrbox: { width: 250, height: 250 },
+          fps: 30, // Faster scanning for spontaneous capture
+          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            const size = Math.floor(minEdge * 0.7);
+            return { width: size, height: size };
+          },
           aspectRatio: 1.0 
         };
 
@@ -113,6 +117,11 @@ export default function StudentDashboard() {
     };
 
     const onScanSuccess = async (decodedText: string) => {
+      // Avoid multiple scans while processing
+      if (scannerRef.current) {
+        try { scannerRef.current.pause(); } catch (e) {}
+      }
+      
       try {
         const qrData = JSON.parse(decodedText);
         const sessionId = qrData.sessionId;

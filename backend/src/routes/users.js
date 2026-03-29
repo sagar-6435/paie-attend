@@ -89,4 +89,23 @@ router.patch('/:id', authenticate, async (req, res) => {
   }
 });
 
+// Delete user (admin only)
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const user = await User.findByIdAndDelete(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

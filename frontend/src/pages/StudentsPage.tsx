@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Download, FileText, CheckCircle2, TrendingUp, Loader2, UserPlus, Users as UsersIcon } from "lucide-react";
+import { Users, Search, Download, FileText, CheckCircle2, TrendingUp, Loader2, UserPlus, Trash2, UsersIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Navigate, useNavigate } from "react-router-dom";
@@ -83,6 +83,24 @@ export default function StudentsPage() {
       toast.error("Network error. Please try again.");
     } finally {
       setIsAddingStudent(false);
+    }
+  };
+
+  const handleRemoveStudent = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to remove ${name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await usersApi.delete(id);
+      if (!response.error) {
+        toast.success("Student removed successfully");
+        fetchStats(); // Refresh
+      } else {
+        toast.error(response.error);
+      }
+    } catch (error) {
+      toast.error("Failed to remove student");
     }
   };
 
@@ -256,8 +274,19 @@ export default function StudentsPage() {
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-bold truncate group-hover:text-primary transition-colors">{s.name}</p>
                           <Badge variant="outline" className="font-mono text-[10px] bg-muted/50">{s.rollNumber || 'N/A'}</Badge>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full shrink-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveStudent(s.id, s.name);
+                            }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
                         </div>
-                        <div className="flex items-center gap-3 mt-2">
+                        <div className="flex items-center gap-3 mt-1">
                           <div className="flex-1">
                             <Progress value={s.percentage} className="h-2" />
                           </div>

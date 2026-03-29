@@ -30,7 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (token && storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const userData = JSON.parse(storedUser);
+        if (userData._id && !userData.id) {
+          userData.id = userData._id;
+        }
+        setUser(userData);
       } catch (error) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
@@ -48,6 +52,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const { user: userData, token } = response.data as any;
+      
+      // Normalize ID if it comes as _id from backend
+      if (userData._id && !userData.id) {
+        userData.id = userData._id;
+      }
       
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userData));

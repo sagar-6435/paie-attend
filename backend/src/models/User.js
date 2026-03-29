@@ -49,10 +49,12 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Remove password from JSON response
+// Remove password from JSON response and map _id to id
 userSchema.methods.toJSON = function() {
   const obj = this.toObject();
+  obj.id = obj._id;
   delete obj.password;
+  delete obj.__v;
   return obj;
 };
 
