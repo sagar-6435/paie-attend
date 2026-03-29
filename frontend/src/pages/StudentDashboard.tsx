@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Send, CheckCircle2, XCircle, Calendar, FileText, TrendingUp, X } from "lucide-react";
+import { Camera, Send, CheckCircle2, XCircle, Calendar, FileText, TrendingUp, X, BookOpen, GraduationCap, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -346,25 +346,50 @@ export default function StudentDashboard() {
                 </Button>
               </motion.div>
             )}
-            {scanState === "scanned" && scannedSession && (
-              <motion.div key="scanned" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
-                <div className="flex items-center gap-2 text-primary">
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span className="font-medium">QR Scanned Successfully</span>
+            {(scanState === "scanned" || scanState === "submitting") && scannedSession && (
+              <motion.div key="scanned" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+                    <CheckCircle2 className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg text-primary leading-none mb-1">Session Active</p>
+                    <p className="text-xs text-muted-foreground font-mono truncate max-w-[200px]">{scannedSession}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">What did you work on today?</label>
-                  <Input
-                    placeholder="e.g. Built a React component for user dashboard..."
+
+                <div className="space-y-3">
+                  <label className="text-sm font-bold flex items-center gap-2 text-foreground/80">
+                    <BookOpen className="w-4 h-4 text-primary" />
+                    What have you learnt today?
+                  </label>
+                  <textarea
+                    placeholder="Describe your learning summary, key takeaways, or achievements..."
+                    className="w-full min-h-[140px] p-4 rounded-2xl bg-muted/40 border-2 border-transparent focus:border-primary/30 focus:bg-background transition-all outline-none text-sm leading-relaxed"
                     value={workDone}
                     onChange={(e) => setWorkDone(e.target.value)}
-                    className="h-11"
                   />
+                  <p className="text-[10px] text-muted-foreground italic px-1 text-center">
+                    Successfully scanned. You can submit this after you finish writing.
+                  </p>
                 </div>
-                <Button onClick={handleSubmit} className="w-full gradient-primary text-primary-foreground">
-                  <Send className="w-4 h-4 mr-2" />
-                  Submit Attendance
-                </Button>
+
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={() => { setScanState("idle"); setScannedSession(null); }} 
+                    variant="ghost" 
+                    className="flex-1 h-12 rounded-xl"
+                  >
+                    Cancel
+                  </Button>
+                    <Button 
+                      onClick={handleSubmit} 
+                      className="flex-[2] h-12 rounded-xl gradient-primary text-primary-foreground font-bold shadow-xl shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      disabled={!workDone.trim() || scanState === "submitting"}
+                    >
+                      {scanState === "submitting" ? <RefreshCw className="w-5 h-5 animate-spin" /> : "Submit Attendance"}
+                    </Button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

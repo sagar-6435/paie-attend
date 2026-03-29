@@ -5,7 +5,7 @@ import { qrSessionApi, attendanceApi } from "./api";
 interface AttendanceContextType {
   activeSession: QRSession | null;
   attendance: AttendanceRecord[];
-  generateQR: (location: { lat: number; lng: number }, adminId: string) => Promise<{ success: boolean; error?: string }>;
+  generateQR: (location: { lat: number; lng: number }, adminId: string, expiresIn?: number) => Promise<{ success: boolean; error?: string }>;
   submitAttendance: (
     sessionId: string,
     studentId: string,
@@ -23,9 +23,9 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
   const [activeSession, setActiveSession] = useState<QRSession | null>(null);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>(MOCK_ATTENDANCE);
 
-  const generateQR = useCallback(async (location: { lat: number; lng: number }, adminId: string) => {
+  const generateQR = useCallback(async (location: { lat: number; lng: number }, adminId: string, expiresIn: number = 30) => {
     try {
-      const response = await qrSessionApi.create(location, 30);
+      const response = await qrSessionApi.create(location, expiresIn);
       if (response.error) {
         return { success: false, error: response.error };
       }

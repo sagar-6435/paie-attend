@@ -40,13 +40,20 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// Get session by ID
+// Get session by ID (with strict expiration check)
 router.get('/:id', authenticate, async (req, res) => {
   try {
-    const session = await QRSession.findOne({ sessionId: req.params.id }).populate('createdBy', 'name email');
+    const session = await QRSession.findOne({ 
+      sessionId: req.params.id 
+    }).populate('createdBy', 'name email');
     
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
+    }
+
+    // Explicitly check if expired
+    if (new Date() > session.expiresAt) {
+      return res.status(410).json({ error: 'This QR code has expired. Please ask the admin to generate a new one.' });
     }
 
     res.json(session);
