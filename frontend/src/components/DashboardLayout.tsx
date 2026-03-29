@@ -20,7 +20,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <aside className="hidden md:flex flex-col w-64 border-r border-sidebar-border bg-sidebar h-screen sticky top-0">
         <div className="p-6">
           <div className="flex items-center gap-2 mb-8">
-            <QrCode className="w-8 h-8 text-primary shadow-lg shadow-primary/20" />
+            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center p-1.5 shadow-md border border-primary/10">
+              <img src="/favicon.png" alt="PAIE Logo" className="w-full h-full object-contain" />
+            </div>
             <span className="font-black text-xl tracking-tighter">PAIE-<span className="text-primary">Attend</span></span>
           </div>
         </div>
@@ -146,7 +148,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <header className="md:hidden border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-20">
           <div className="flex items-center justify-between h-14 px-4">
             <div className="flex items-center gap-2">
-              <QrCode className="w-5 h-5 text-primary" />
+            <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center p-1 shadow-sm border border-primary/10">
+              <img src="/favicon.png" alt="PAIE Logo" className="w-full h-full object-contain" />
+            </div>
               <span className="font-black text-sm tracking-tight">PAIE-<span className="text-primary">Attend</span></span>
             </div>
             <div className="flex items-center gap-2">

@@ -17,7 +17,7 @@ router.get('/', authenticate, authorize('admin'), async (req, res) => {
 // Create new user (admin only)
 router.post('/', authenticate, authorize('admin'), async (req, res) => {
   try {
-    const { name, email, password, role = 'student', rollNumber } = req.body;
+    const { name, email, password, role = 'student', rollNumber, phoneNumber } = req.body;
     
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -25,7 +25,7 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    const user = new User({ name, email, password, role, rollNumber });
+    const user = new User({ name, email, password, role, rollNumber, phoneNumber });
     await user.save();
     
     res.status(201).json(user);
@@ -66,7 +66,7 @@ router.patch('/:id', authenticate, async (req, res) => {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
-    const { name, rollNumber, password } = req.body;
+    const { name, rollNumber, phoneNumber, password } = req.body;
     const user = await User.findById(req.params.id);
     
     if (!user) {
@@ -75,6 +75,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 
     if (name) user.name = name;
     if (rollNumber) user.rollNumber = rollNumber;
+    if (phoneNumber) user.phoneNumber = phoneNumber;
     if (password) user.password = password; // Will be hashed by pre-save hook
 
     await user.save();

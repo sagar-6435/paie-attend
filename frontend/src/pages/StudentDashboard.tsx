@@ -15,7 +15,7 @@ type ScanState = "idle" | "scanning" | "scanned" | "submitting";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
-  const { submitAttendance, fetchActiveSession } = useAttendance();
+  const { submitAttendance, fetchActiveSession, attendance } = useAttendance();
   const [scanState, setScanState] = useState<ScanState>("idle");
   const [scannedSession, setScannedSession] = useState<string | null>(null);
   const [workDone, setWorkDone] = useState("");
@@ -407,6 +407,56 @@ export default function StudentDashboard() {
               <span className="text-sm">{submitResult.success ? "Attendance marked!" : submitResult.error}</span>
             </motion.div>
           )}
+        </CardContent>
+      </Card>
+      {/* Recent Activity */}
+      <Card className="glass-card">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-accent" />
+            My Recent Submissions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {attendance.filter(a => a.studentId === user.id).length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border-2 border-dashed rounded-2xl bg-muted/5">
+                <p className="text-sm font-medium">No records found for today</p>
+                <p className="text-xs">Your attendance will appear here once marked.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {attendance
+                  .filter(a => a.studentId === user.id)
+                  .reverse()
+                  .slice(0, 5)
+                  .map((record, i) => (
+                    <motion.div 
+                      key={record.id || i}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                      className="p-4 rounded-xl bg-muted/30 border border-border/50 flex items-start gap-4"
+                    >
+                      <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center text-primary-foreground font-black shrink-0">
+                        {new Date(record.timestamp).getHours()}h
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <Badge variant="outline" className="text-[10px] font-mono border-primary/20 text-primary">
+                            {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground italic">Verified</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-2 uppercase font-black tracking-tight leading-relaxed">
+                          "{record.workDone}"
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

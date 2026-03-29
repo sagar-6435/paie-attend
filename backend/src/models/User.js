@@ -25,6 +25,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     sparse: true,
   },
+  phoneNumber: {
+    type: String,
+    sparse: true,
+    unique: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

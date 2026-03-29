@@ -38,7 +38,8 @@ export default function StudentsPage() {
     name: "",
     email: "",
     password: "",
-    rollNumber: ""
+    rollNumber: "",
+    phoneNumber: ""
   });
 
   const fetchStats = async () => {
@@ -74,7 +75,7 @@ export default function StudentsPage() {
       if (!response.error) {
         toast.success("Student added successfully!");
         setIsDialogOpen(false);
-        setNewStudent({ name: "", email: "", password: "", rollNumber: "" });
+        setNewStudent({ name: "", email: "", password: "", rollNumber: "", phoneNumber: "" });
         fetchStats(); // Refresh the list
       } else {
         toast.error(response.error || "Failed to add student");
@@ -90,7 +91,8 @@ export default function StudentsPage() {
 
   const filteredStats = studentsData.filter(s => 
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (s.rollNumber && s.rollNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+    (s.rollNumber && s.rollNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (s.phoneNumber && s.phoneNumber.includes(searchTerm))
   );
 
   return (
@@ -132,6 +134,15 @@ export default function StudentsPage() {
                       required 
                       value={newStudent.rollNumber}
                       onChange={(e) => setNewStudent({...newStudent, rollNumber: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input 
+                      id="phone" 
+                      placeholder="e.g. +91 9876543210" 
+                      value={newStudent.phoneNumber}
+                      onChange={(e) => setNewStudent({...newStudent, phoneNumber: e.target.value})}
                     />
                   </div>
                   <div className="space-y-2">
@@ -221,7 +232,7 @@ export default function StudentsPage() {
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Search by name or roll number..." 
+              placeholder="Search by name, roll or phone..." 
               className="pl-9 h-11"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

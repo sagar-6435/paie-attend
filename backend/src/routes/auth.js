@@ -48,7 +48,8 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({
       $or: [
         { email: email.toLowerCase() },
-        { rollNumber: email }
+        { rollNumber: email },
+        { phoneNumber: email }
       ]
     });
 

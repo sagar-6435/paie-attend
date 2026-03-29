@@ -27,6 +27,7 @@ const addStudent = async () => {
       password: 'student123',
       role: 'student',
       rollNumber: 'CS2024099',
+      phoneNumber: '9876543210',
     });
 
     await student.save();
@@ -36,6 +37,7 @@ const addStudent = async () => {
     console.log('   Email: student@paie.club');
     console.log('   Password: student123');
     console.log('   Roll Number: CS2024099');
+    console.log('   Phone Number: 9876543210');
     console.log('   Role: Student');
     console.log('\n🌐 Access the application at:');
     console.log('   http://localhost:5173');

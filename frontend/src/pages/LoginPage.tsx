@@ -45,8 +45,8 @@ export default function LoginPage() {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary glow-primary mb-4">
-            <QrCode className="w-8 h-8 text-primary-foreground" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-white shadow-2xl mb-6 overflow-hidden border-2 border-primary/20">
+            <img src="/favicon.png" alt="PAIE Logo" className="w-16 h-16 object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-primary-foreground tracking-tight">
             PAIE-<span className="text-gradient">Attend</span>
@@ -57,11 +57,11 @@ export default function LoginPage() {
         <div className="glass-card rounded-2xl p-6 bg-card">
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="loginId">Email or Roll Number</Label>
+              <Label htmlFor="loginId">Email, Phone or Roll Number</Label>
               <Input
                 id="loginId"
                 type="text"
-                placeholder="Enter email or roll number"
+                placeholder="Enter email, phone or roll number"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-11"

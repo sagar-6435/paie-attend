@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { 
-  User, 
+  User as UserIcon, 
   Mail, 
   Lock, 
   Hash, 
@@ -19,7 +19,8 @@ import {
   RefreshCw,
   Eye,
   EyeOff,
-  GraduationCap
+  GraduationCap,
+  Phone
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -32,6 +33,7 @@ export default function ProfilePage() {
     name: user?.name || "",
     rollNumber: user?.rollNumber || "",
     email: user?.email || "",
+    phoneNumber: user?.phoneNumber || "",
     password: "",
     confirmPassword: ""
   });
@@ -43,7 +45,8 @@ export default function ProfilePage() {
         ...prev,
         name: user.name,
         rollNumber: user.rollNumber || "",
-        email: user.email
+        email: user.email,
+        phoneNumber: user.phoneNumber || ""
       }));
     }
   }, [user]);
@@ -57,6 +60,7 @@ export default function ProfilePage() {
     const nothingChanged = 
       formData.name === user.name && 
       formData.rollNumber === (user.rollNumber || "") && 
+      formData.phoneNumber === (user.phoneNumber || "") &&
       !formData.password;
 
     if (nothingChanged) {
@@ -73,7 +77,8 @@ export default function ProfilePage() {
     try {
       const updatePayload: any = {
         name: formData.name,
-        rollNumber: formData.rollNumber
+        rollNumber: formData.rollNumber,
+        phoneNumber: formData.phoneNumber
       };
       
       if (formData.password) {
@@ -173,7 +178,7 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="name" className="text-xs font-bold flex items-center gap-1.5 ml-1">
-                          <User className="w-3 h-3" /> Full Name
+                          <UserIcon className="w-3 h-3" /> Full Name
                         </Label>
                         <Input 
                           id="name" 
@@ -203,6 +208,18 @@ export default function ProfilePage() {
                         disabled
                         className="h-11 rounded-xl bg-muted/20 text-muted-foreground border-dashed"
                       />
+                      <div className="space-y-2">
+                        <Label htmlFor="phone" className="text-xs font-bold flex items-center gap-1.5 ml-1">
+                          <Phone className="w-3 h-3" /> Phone Number
+                        </Label>
+                        <Input 
+                          id="phone" 
+                          value={formData.phoneNumber}
+                          onChange={e => setFormData(f => ({ ...f, phoneNumber: e.target.value }))}
+                          className="h-11 rounded-xl bg-muted/40"
+                          placeholder="Your phone number"
+                        />
+                      </div>
                     </div>
                   </div>
 
