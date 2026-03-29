@@ -33,71 +33,93 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
+    let isMounted = true;
 
     const startScanner = async () => {
-      if (scanState === "scanning" && qrReaderRef.current) {
-        // Ensure HTTPS for production
-        if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-          setCameraError("Camera access requires a secure (HTTPS) connection.");
-          toast.error("Camera requires HTTPS. Use manual entry.");
-          setScanState("idle");
-          return;
+      if (scanState !== "scanning" || !qrReaderRef.current) return;
+
+      // 1. Check for Secure Context (HTTPS requirement)
+      if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+        setCameraError("Camera access requires HTTPS in production.");
+        toast.error("Insecure connection. Camera blocked.");
+        setScanState("idle");
+        return;
+      }
+
+      // 2. Small delay to ensure the container is fully rendered (handles animation race conditions)
+      await new Promise(resolve => setTimeout(resolve, 500));
+      if (!isMounted) return;
+
+      try {
+        html5QrCode = new Html5Qrcode("qr-reader");
+        scannerRef.current = html5QrCode;
+
+        // 3. Try to discover cameras
+        const cameras = await Html5Qrcode.getCameras();
+        
+        if (!cameras || cameras.length === 0) {
+          throw new Error("No cameras found on this device.");
         }
 
-        try {
-          html5QrCode = new Html5Qrcode("qr-reader");
-          scannerRef.current = html5QrCode;
+        // Try to find the back camera, otherwise use the first one available
+        const backCamera = cameras.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('environment'));
+        const cameraId = backCamera ? backCamera.id : cameras[0].id;
 
-          const config = { 
-            fps: 10, 
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0 
-          };
+        const config = { 
+          fps: 10, 
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0 
+        };
 
-          await html5QrCode.start(
-            { facingMode: "environment" },
-            config,
-            async (decodedText) => {
-              try {
-                const qrData = JSON.parse(decodedText);
-                const sessionId = qrData.sessionId;
+        await html5QrCode.start(
+          cameraId,
+          config,
+          async (decodedText) => {
+            try {
+              const qrData = JSON.parse(decodedText);
+              const sessionId = qrData.sessionId;
 
-                const response = await qrSessionApi.getById(sessionId);
-                if (response.error) {
-                  toast.error("Invalid QR code or session expired");
-                  return;
-                }
-
-                if (response.data) {
-                  await fetchActiveSession(sessionId);
-                  setScannedSession(sessionId);
-                  setScanState("scanned");
-                  
-                  if (scannerRef.current) {
-                    await scannerRef.current.stop();
-                    scannerRef.current = null;
-                  }
-                  toast.success("QR scanned successfully!");
-                }
-              } catch (error) {
-                console.error("QR parsing error:", error);
-                toast.error("Failed to parse QR code. Try again.");
+              const response = await qrSessionApi.getById(sessionId);
+              if (response.error) {
+                toast.error("Invalid QR code or session expired");
+                return;
               }
-            },
-            () => {} // silent on scan failures
-          );
-        } catch (err: any) {
-          console.error("Scanner error:", err);
-          let message = "Unable to access camera";
-          if (err.name === "NotAllowedError") message = "Camera permission denied";
-          if (err.name === "NotFoundError") message = "No camera found on this device";
-          
-          setCameraError(message);
-          toast.error(message);
-          // Try to clean up
-          if (html5QrCode) {
-            try { await html5QrCode.clear(); } catch(e) {}
-          }
+
+              if (response.data) {
+                await fetchActiveSession(sessionId);
+                setScannedSession(sessionId);
+                setScanState("scanned");
+                
+                if (scannerRef.current) {
+                  await scannerRef.current.stop();
+                  scannerRef.current = null;
+                }
+                toast.success("QR scanned successfully!");
+              }
+            } catch (error) {
+              console.error("QR parsing error:", error);
+              toast.error("Failed to parse QR code. Try again.");
+            }
+          },
+          () => {} // silent on errors during scanning
+        );
+      } catch (err: any) {
+        console.error("Scanner error:", err);
+        let message = err.message || "Unable to access camera";
+        
+        if (err.toString().includes("NotAllowedError") || err.name === "NotAllowedError") {
+          message = "Permission Denied: Please allow camera access in browser settings.";
+        } else if (err.toString().includes("NotFoundError")) {
+          message = "Camera Not Found: Please ensure your device has a camera.";
+        } else if (err.toString().includes("InsecureContext")) {
+          message = "HTTPS Required: Switch to an HTTPS connection to use the camera.";
+        }
+        
+        setCameraError(message);
+        toast.error(message);
+        
+        if (html5QrCode) {
+          try { await html5QrCode.clear(); } catch(e) {}
         }
       }
     };
@@ -105,8 +127,13 @@ export default function StudentDashboard() {
     startScanner();
 
     return () => {
-      if (scannerRef.current && scannerRef.current.isScanning) {
-        scannerRef.current.stop().catch(console.error);
+      isMounted = false;
+      if (scannerRef.current) {
+        // Use a flag to avoid calling stop multiple times or if already stopping
+        const currentScanner = scannerRef.current;
+        if (currentScanner.isScanning) {
+          currentScanner.stop().catch(() => {});
+        }
       }
     };
   }, [scanState, fetchActiveSession]);
