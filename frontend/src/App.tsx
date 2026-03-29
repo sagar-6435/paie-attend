@@ -8,6 +8,7 @@ import { AttendanceProvider } from "@/lib/attendance-context";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import GuestDashboard from "./pages/GuestDashboard";
+import NetworkDebug from "./pages/NetworkDebug";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
               <Route path="/" element={<LoginPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/guest" element={<GuestDashboard />} />
+              <Route path="/debug" element={<NetworkDebug />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

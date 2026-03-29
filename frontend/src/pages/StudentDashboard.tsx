@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useAttendance } from "@/lib/attendance-context";
 import { getStudentAttendance, getStudentAttendancePercentage, TOTAL_SESSIONS } from "@/lib/mock-data";
+import { qrSessionApi } from "@/lib/api";
+import { Html5QrcodeScanner } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Send, CheckCircle2, XCircle, Calendar, FileText, TrendingUp } from "lucide-react";
+import { Camera, Send, CheckCircle2, XCircle, Calendar, FileText, TrendingUp, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -15,42 +17,132 @@ type ScanState = "idle" | "scanning" | "scanned" | "submitting";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
-  const { submitAttendance, activeSession, getTimeRemaining } = useAttendance();
+  const { submitAttendance, fetchActiveSession } = useAttendance();
   const [scanState, setScanState] = useState<ScanState>("idle");
   const [scannedSession, setScannedSession] = useState<string | null>(null);
   const [workDone, setWorkDone] = useState("");
   const [submitResult, setSubmitResult] = useState<{ success: boolean; error?: string } | null>(null);
+  const [manualSessionId, setManualSessionId] = useState("");
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const qrReaderRef = useRef<HTMLDivElement>(null);
 
   if (!user) return null;
   const myAttendance = getStudentAttendance(user.id);
   const percentage = getStudentAttendancePercentage(user.id);
 
+  useEffect(() => {
+    if (scanState === "scanning" && qrReaderRef.current) {
+      const scanner = new Html5QrcodeScanner(
+        "qr-reader",
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+          disableFlip: false,
+        },
+        false
+      );
+
+      scanner.render(
+        async (decodedText) => {
+          try {
+            // Parse the QR data
+            const qrData = JSON.parse(decodedText);
+            const sessionId = qrData.sessionId;
+
+            // Verify session exists and is active
+            const response = await qrSessionApi.getById(sessionId);
+            if (response.error) {
+              toast.error("Invalid QR code or session expired");
+              return;
+            }
+
+            if (response.data) {
+              await fetchActiveSession(sessionId);
+              setScannedSession(sessionId);
+              setScanState("scanned");
+              scanner.clear().catch(() => {});
+              scannerRef.current = null;
+              toast.success("QR scanned successfully!");
+            }
+          } catch (error) {
+            console.error("QR parsing error:", error);
+            toast.error("Failed to parse QR code. Try again.");
+          }
+        },
+        (error) => {
+          // Ignore scanning errors - these are normal during scanning
+          console.debug("Scanning:", error);
+        }
+      ).catch((err) => {
+        console.error("Scanner initialization error:", err);
+        setCameraError(err.message || "Unable to access camera");
+        toast.error("Camera access denied. Use manual entry instead.");
+      });
+
+      scannerRef.current = scanner;
+    }
+
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(() => {});
+        scannerRef.current = null;
+      }
+    };
+  }, [scanState, fetchActiveSession]);
+
   const handleScan = () => {
     setScanState("scanning");
     setSubmitResult(null);
-    // Simulate scanning the active QR
-    setTimeout(() => {
-      if (activeSession && getTimeRemaining() > 0) {
-        setScannedSession(activeSession.sessionId);
-        setScanState("scanned");
-        toast.success("QR scanned successfully!");
-      } else {
-        setScanState("idle");
-        toast.error("No active QR code found or QR has expired. Ask admin to generate one.");
-      }
-    }, 1500);
+    setCameraError(null);
   };
 
-  const handleSubmit = () => {
+  const handleCancelScan = () => {
+    if (scannerRef.current) {
+      scannerRef.current.clear().catch(() => {});
+      scannerRef.current = null;
+    }
+    setScanState("idle");
+    setCameraError(null);
+  };
+
+  const handleManualSessionSubmit = async () => {
+    if (!manualSessionId.trim()) {
+      toast.error("Please enter a session ID");
+      return;
+    }
+
+    try {
+      const response = await qrSessionApi.getById(manualSessionId);
+      if (response.error) {
+        toast.error("Invalid session ID or session expired");
+        return;
+      }
+
+      if (response.data) {
+        await fetchActiveSession(manualSessionId);
+        setScannedSession(manualSessionId);
+        setScanState("scanned");
+        setManualSessionId("");
+        toast.success("Session found!");
+      }
+    } catch (error) {
+      toast.error("Failed to find session");
+    }
+  };
+
+  const handleSubmit = async () => {
     if (!scannedSession || !workDone.trim()) {
       toast.error("Please enter what you worked on today.");
       return;
     }
     setScanState("submitting");
-    // Simulate getting student location
+    
+    // Get student location
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const result = submitAttendance(
+      async (pos) => {
+        const result = await submitAttendance(
           scannedSession,
           user.id,
           user.name,
@@ -64,9 +156,15 @@ export default function StudentDashboard() {
         if (result.success) toast.success("Attendance marked successfully!");
         else toast.error(result.error || "Failed to mark attendance");
       },
-      () => {
-        // Fallback: simulate nearby location for demo
-        const result = submitAttendance(scannedSession, user.id, user.name, { lat: 28.6139, lng: 77.209 }, workDone.trim());
+      async () => {
+        // Fallback: use default location for demo
+        const result = await submitAttendance(
+          scannedSession,
+          user.id,
+          user.name,
+          { lat: 28.6139, lng: 77.209 },
+          workDone.trim()
+        );
         setSubmitResult(result);
         setScanState("idle");
         setWorkDone("");
@@ -151,12 +249,29 @@ export default function StudentDashboard() {
               </motion.div>
             )}
             {scanState === "scanning" && (
-              <motion.div key="scanning" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-4 py-6">
-                <div className="w-32 h-32 rounded-2xl border-2 border-primary bg-primary/5 flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute w-full h-0.5 bg-primary animate-scan-line" />
-                  <Camera className="w-12 h-12 text-primary" />
-                </div>
-                <p className="text-sm text-primary font-medium">Scanning...</p>
+              <motion.div key="scanning" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-4">
+                <div ref={qrReaderRef} id="qr-reader" className="w-full rounded-2xl overflow-hidden border-2 border-primary" style={{ minHeight: "300px" }} />
+                {cameraError && (
+                  <div className="w-full p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                    <p className="font-medium mb-2">Camera access denied or unavailable</p>
+                    <p className="text-xs mb-3">Enter the session ID manually instead:</p>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter session ID"
+                        value={manualSessionId}
+                        onChange={(e) => setManualSessionId(e.target.value)}
+                        className="h-9 text-sm"
+                      />
+                      <Button onClick={handleManualSessionSubmit} size="sm" className="gradient-primary text-primary-foreground">
+                        Submit
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                <Button onClick={handleCancelScan} variant="outline" className="w-full">
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel Scan
+                </Button>
               </motion.div>
             )}
             {scanState === "scanned" && scannedSession && (

@@ -28,6 +28,28 @@ export default function AdminDashboard() {
     setTimeout(() => studentListRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
   };
 
+  const handleGenerateQR = useCallback(async () => {
+    setLocationStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setAdminLocation(loc);
+        if (user) {
+          const result = await generateQR(loc, user.id);
+          setLocationStatus(result.success ? "success" : "error");
+        }
+      },
+      async () => {
+        const fallback = { lat: 28.6139, lng: 77.209 };
+        setAdminLocation(fallback);
+        if (user) {
+          const result = await generateQR(fallback, user.id);
+          setLocationStatus(result.success ? "success" : "error");
+        }
+      }
+    );
+  }, [user, generateQR]);
+
   useEffect(() => {
     const t = setInterval(() => setTimeLeft(getTimeRemaining()), 1000);
     return () => clearInterval(t);
@@ -35,27 +57,9 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (autoRefresh && timeLeft === 0 && adminLocation && user) {
-      generateQR(adminLocation, user.id);
+      handleGenerateQR();
     }
-  }, [autoRefresh, timeLeft, adminLocation, user, generateQR]);
-
-  const handleGenerateQR = useCallback(() => {
-    setLocationStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setAdminLocation(loc);
-        setLocationStatus("success");
-        if (user) generateQR(loc, user.id);
-      },
-      () => {
-        const fallback = { lat: 28.6139, lng: 77.209 };
-        setAdminLocation(fallback);
-        setLocationStatus("success");
-        if (user) generateQR(fallback, user.id);
-      }
-    );
-  }, [user, generateQR]);
+  }, [autoRefresh, timeLeft, adminLocation, user, handleGenerateQR]);
 
   const qrData = activeSession
     ? JSON.stringify({ sessionId: activeSession.sessionId, ts: activeSession.createdAt })
