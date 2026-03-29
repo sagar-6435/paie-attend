@@ -33,37 +33,34 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
-    let isMounted = true;
+    let isStarting = false;
 
     const startScanner = async () => {
-      if (scanState !== "scanning" || !qrReaderRef.current) return;
+      if (scanState !== "scanning" || !qrReaderRef.current || isStarting) return;
+      isStarting = true;
 
-      // 1. Check for Secure Context (HTTPS requirement)
-      if (!window.isSecureContext && window.location.hostname !== 'localhost') {
-        setCameraError("Camera access requires HTTPS in production.");
-        toast.error("Insecure connection. Camera blocked.");
+      // 1. Hardware/Browser Support Check
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setCameraError("Your browser or device does not support camera access.");
+        toast.error("Camera not supported on this browser.");
         setScanState("idle");
+        isStarting = false;
         return;
       }
 
-      // 2. Small delay to ensure the container is fully rendered (handles animation race conditions)
-      await new Promise(resolve => setTimeout(resolve, 500));
-      if (!isMounted) return;
+      // 2. Secure Context Check
+      if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+        setCameraError("Camera access requires an HTTPS connection (Secure Context).");
+        toast.error("HTTPS Required for camera.");
+        setScanState("idle");
+        isStarting = false;
+        return;
+      }
 
       try {
+        // Create instance
         html5QrCode = new Html5Qrcode("qr-reader");
         scannerRef.current = html5QrCode;
-
-        // 3. Try to discover cameras
-        const cameras = await Html5Qrcode.getCameras();
-        
-        if (!cameras || cameras.length === 0) {
-          throw new Error("No cameras found on this device.");
-        }
-
-        // Try to find the back camera, otherwise use the first one available
-        const backCamera = cameras.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('environment'));
-        const cameraId = backCamera ? backCamera.id : cameras[0].id;
 
         const config = { 
           fps: 10, 
@@ -71,8 +68,9 @@ export default function StudentDashboard() {
           aspectRatio: 1.0 
         };
 
+        // 3. Start scanning with environment camera directly
         await html5QrCode.start(
-          cameraId,
+          { facingMode: "environment" },
           config,
           async (decodedText) => {
             try {
@@ -91,7 +89,7 @@ export default function StudentDashboard() {
                 setScanState("scanned");
                 
                 if (scannerRef.current) {
-                  await scannerRef.current.stop();
+                  await scannerRef.current.stop().catch(() => {});
                   scannerRef.current = null;
                 }
                 toast.success("QR scanned successfully!");
@@ -101,18 +99,18 @@ export default function StudentDashboard() {
               toast.error("Failed to parse QR code. Try again.");
             }
           },
-          () => {} // silent on errors during scanning
+          () => {} // Silent on scan failures (normal behavior)
         );
       } catch (err: any) {
-        console.error("Scanner error:", err);
-        let message = err.message || "Unable to access camera";
+        console.error("Scanner start error:", err);
+        let message = "Unable to access camera";
         
-        if (err.toString().includes("NotAllowedError") || err.name === "NotAllowedError") {
+        if (err.name === "NotAllowedError" || err.toString().includes("NotAllowedError")) {
           message = "Permission Denied: Please allow camera access in browser settings.";
-        } else if (err.toString().includes("NotFoundError")) {
-          message = "Camera Not Found: Please ensure your device has a camera.";
-        } else if (err.toString().includes("InsecureContext")) {
-          message = "HTTPS Required: Switch to an HTTPS connection to use the camera.";
+        } else if (err.name === "NotFoundError" || err.toString().includes("NotFoundError")) {
+          message = "No camera found or it is currently in use by another app.";
+        } else if (err.name === "NotReadableError") {
+          message = "Camera hardware error. Please try restarting your browser.";
         }
         
         setCameraError(message);
@@ -121,15 +119,15 @@ export default function StudentDashboard() {
         if (html5QrCode) {
           try { await html5QrCode.clear(); } catch(e) {}
         }
+      } finally {
+        isStarting = false;
       }
     };
 
     startScanner();
 
     return () => {
-      isMounted = false;
       if (scannerRef.current) {
-        // Use a flag to avoid calling stop multiple times or if already stopping
         const currentScanner = scannerRef.current;
         if (currentScanner.isScanning) {
           currentScanner.stop().catch(() => {});
@@ -146,7 +144,10 @@ export default function StudentDashboard() {
 
   const handleCancelScan = () => {
     if (scannerRef.current) {
-      scannerRef.current.clear().catch(() => {});
+      if (scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(() => {});
+      }
+      scannerRef.current.clear();
       scannerRef.current = null;
     }
     setScanState("idle");
