@@ -42,9 +42,16 @@ router.post('/register', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body; 
 
-    const user = await User.findOne({ email });
+    // Find user by email or rollNumber
+    const user = await User.findOne({
+      $or: [
+        { email: email.toLowerCase() },
+        { rollNumber: email }
+      ]
+    });
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }

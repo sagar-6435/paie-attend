@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { QrCode, LayoutDashboard, LogOut, Shield, GraduationCap } from "lucide-react";
+import { QrCode, LayoutDashboard, LogOut, Shield, GraduationCap, Users } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
@@ -30,10 +30,31 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="flex-1 p-3 space-y-1">
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-sidebar-accent text-sidebar-accent-foreground text-sm font-medium">
+          <button 
+            onClick={() => navigate("/dashboard")}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname === "/dashboard" 
+                ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+            }`}
+          >
             <LayoutDashboard className="w-4 h-4" />
             Dashboard
           </button>
+          
+          {user?.role === "admin" && (
+            <button 
+              onClick={() => navigate("/students")}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                location.pathname === "/students" 
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              Students
+            </button>
+          )}
         </nav>
 
         <div className="p-3 border-t border-sidebar-border">

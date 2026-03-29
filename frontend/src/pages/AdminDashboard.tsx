@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth-context";
 import { useAttendance } from "@/lib/attendance-context";
 import { getAllStudentsStats, TOTAL_SESSIONS } from "@/lib/mock-data";
@@ -18,15 +19,9 @@ export default function AdminDashboard() {
   const [adminLocation, setAdminLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
 
-  const [showStudentList, setShowStudentList] = useState(false);
+  const navigate = useNavigate();
   const stats = getAllStudentsStats();
   const todayCount = attendance.filter((a) => a.date === new Date().toISOString().split("T")[0]).length;
-  const studentListRef = useRef<HTMLDivElement>(null);
-
-  const scrollToStudents = () => {
-    setShowStudentList(true);
-    setTimeout(() => studentListRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-  };
 
   const handleGenerateQR = useCallback(async () => {
     setLocationStatus("loading");
@@ -78,9 +73,8 @@ export default function AdminDashboard() {
         </Badge>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="glass-card cursor-pointer hover:border-primary/50 transition-colors" onClick={scrollToStudents}>
+        <Card className="glass-card cursor-pointer hover:border-primary/50 transition-colors" onClick={() => navigate("/students")}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
@@ -93,7 +87,7 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="glass-card cursor-pointer hover:border-primary/50 transition-colors" onClick={scrollToStudents}>
+        <Card className="glass-card cursor-pointer hover:border-primary/50 transition-colors" onClick={() => navigate("/students")}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl gradient-accent flex items-center justify-center">
@@ -106,7 +100,7 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="glass-card cursor-pointer hover:border-primary/50 transition-colors" onClick={scrollToStudents}>
+        <Card className="glass-card">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
@@ -210,49 +204,6 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* Student List */}
-      <div ref={studentListRef}>
-      {showStudentList && (
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-accent" />
-            Student Attendance Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {stats.map((s, i) => (
-              <motion.div
-                key={s.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-              >
-                <div className="w-10 h-10 rounded-full gradient-accent flex items-center justify-center text-accent-foreground font-semibold text-sm">
-                  {s.name.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium truncate">{s.name}</p>
-                    <span className="text-sm font-mono text-muted-foreground">{s.rollNumber}</span>
-                  </div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <Progress value={s.percentage} className="flex-1 h-2" />
-                    <span className="text-sm font-semibold w-12 text-right">{s.percentage}%</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1 truncate">
-                    Last: {s.lastWork}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      )}
-      </div>
     </div>
   );
 }

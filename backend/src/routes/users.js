@@ -14,6 +14,26 @@ router.get('/', authenticate, authorize('admin'), async (req, res) => {
   }
 });
 
+// Create new user (admin only)
+router.post('/', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const { name, email, password, role = 'student', rollNumber } = req.body;
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    const user = new User({ name, email, password, role, rollNumber });
+    await user.save();
+    
+    res.status(201).json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get all students
 router.get('/students', authenticate, async (req, res) => {
   try {

@@ -57,11 +57,11 @@ export default function LoginPage() {
         <div className="glass-card rounded-2xl p-6 bg-card">
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="loginId">Email or Roll Number</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
+                id="loginId"
+                type="text"
+                placeholder="Enter email or roll number"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-11"

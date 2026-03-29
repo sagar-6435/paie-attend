@@ -11,7 +11,7 @@ const apiCall = async <T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> => {
-  const headers: HeadersInit = {
+  const headers: any = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
@@ -61,6 +61,11 @@ export const usersApi = {
   getAll: () => apiCall('/users'),
   getStudents: () => apiCall('/users/students'),
   getById: (id: string) => apiCall(`/users/${id}`),
+  create: (data: any) =>
+    apiCall('/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   update: (id: string, data: any) =>
     apiCall(`/users/${id}`, {
       method: 'PATCH',
