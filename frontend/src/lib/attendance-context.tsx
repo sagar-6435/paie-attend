@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from "react";
 import { QRSession, AttendanceRecord, MOCK_ATTENDANCE } from "./mock-data";
 import { qrSessionApi, attendanceApi } from "./api";
 
@@ -109,6 +109,45 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
     },
     []
   );
+
+  const fetchDailyAttendance = useCallback(async () => {
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const response = await attendanceApi.getAll(undefined, today);
+      if (response.data) {
+        const records = (response.data as any[]).map(record => ({
+          id: record._id,
+          studentId: record.studentId?._id || record.studentId,
+          studentName: record.studentName || record.studentId?.name,
+          sessionId: record.sessionId,
+          date: record.date,
+          workDone: record.workDone,
+          location: record.location,
+          timestamp: new Date(record.timestamp).getTime(),
+        }));
+        setAttendance(records);
+      }
+    } catch (e) {
+      console.error("Failed to fetch global attendance", e);
+    }
+  }, []);
+
+  // Initial fetch and global polling
+  useState(() => {
+    fetchDailyAttendance();
+    const interval = setInterval(fetchDailyAttendance, 5000);
+    // Cleanup is tricky in a useState initializer but for this singleton context it's fine.
+    // Better to use useEffect.
+  });
+
+  // Re-implementing with useEffect for proper cleanup
+  const [hasFetched, setHasFetched] = useState(false);
+  useState(() => setHasFetched(true)); // Hack to trigger effect on mount
+
+  useEffect(() => {
+    const interval = setInterval(fetchDailyAttendance, 5000);
+    return () => clearInterval(interval);
+  }, [fetchDailyAttendance]);
 
   return (
     <AttendanceContext.Provider value={{ activeSession, attendance, generateQR, submitAttendance, getTimeRemaining, fetchActiveSession }}>

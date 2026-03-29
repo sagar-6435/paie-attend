@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import qrSessionRoutes from './routes/qrSession.js';
 import attendanceRoutes from './routes/attendance.js';
+import labStatusRoutes from './routes/labStatus.js';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/qr-sessions', qrSessionRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/lab-status', labStatusRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

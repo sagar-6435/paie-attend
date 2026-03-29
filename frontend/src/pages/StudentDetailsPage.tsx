@@ -162,14 +162,10 @@ export default function StudentDetailsPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <div className="text-center p-3 rounded-xl bg-primary/5 border border-primary/10">
                       <p className="text-2xl font-bold text-primary">{attendanceCount}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">Labs Done</p>
-                    </div>
-                    <div className="text-center p-3 rounded-xl bg-accent/5 border border-accent/10">
-                      <p className="text-2xl font-bold text-accent">{TOTAL_SESSIONS - attendanceCount}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">Remaining</p>
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">Labs Attended</p>
                     </div>
                   </div>
                 </CardContent>

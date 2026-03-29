@@ -2,6 +2,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Navigate } from "react-router-dom";
 import AdminDashboard from "./AdminDashboard";
 import StudentDashboard from "./StudentDashboard";
+import GuestDashboard from "./GuestDashboard";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function DashboardPage() {
@@ -19,6 +20,10 @@ export default function DashboardPage() {
   }
 
   if (!isAuthenticated || !user) return <Navigate to="/" replace />;
+
+  if (user.role === "guest") {
+    return <GuestDashboard />;
+  }
 
   return (
     <DashboardLayout>

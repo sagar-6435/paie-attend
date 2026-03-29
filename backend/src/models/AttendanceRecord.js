@@ -13,7 +13,7 @@ const attendanceRecordSchema = new mongoose.Schema({
   sessionId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'QRSession',
-    required: true,
+    required: false, // Optional for manual records
   },
   date: {
     type: String,
@@ -32,6 +32,10 @@ const attendanceRecordSchema = new mongoose.Schema({
       type: Number,
       required: true,
     },
+  },
+  isManual: {
+    type: Boolean,
+    default: false,
   },
   timestamp: {
     type: Date,

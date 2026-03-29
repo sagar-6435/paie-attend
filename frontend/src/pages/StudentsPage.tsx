@@ -86,24 +86,6 @@ export default function StudentsPage() {
     }
   };
 
-  const handleRemoveStudent = async (id: string, name: string) => {
-    if (!window.confirm(`Are you sure you want to remove ${name}? This action cannot be undone.`)) {
-      return;
-    }
-
-    try {
-      const response = await usersApi.delete(id);
-      if (!response.error) {
-        toast.success("Student removed successfully");
-        fetchStats(); // Refresh
-      } else {
-        toast.error(response.error);
-      }
-    } catch (error) {
-      toast.error("Failed to remove student");
-    }
-  };
-
   const todayCount = attendance.filter((a) => a.date === new Date().toISOString().split("T")[0]).length;
 
   const filteredStats = studentsData.filter(s => 
@@ -227,8 +209,8 @@ export default function StudentsPage() {
                   <TrendingUp className="w-5 h-5 text-secondary-foreground" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{TOTAL_SESSIONS}</p>
-                  <p className="text-xs text-muted-foreground">Avg. Attendance</p>
+                  <p className="text-2xl font-bold">{studentsData[0]?.totalLabs || 0}</p>
+                  <p className="text-xs text-muted-foreground">Total Lab Days</p>
                 </div>
               </div>
             </CardContent>
@@ -274,17 +256,6 @@ export default function StudentsPage() {
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-bold truncate group-hover:text-primary transition-colors">{s.name}</p>
                           <Badge variant="outline" className="font-mono text-[10px] bg-muted/50">{s.rollNumber || 'N/A'}</Badge>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full shrink-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveStudent(s.id, s.name);
-                            }}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
                         </div>
                         <div className="flex items-center gap-3 mt-1">
                           <div className="flex-1">

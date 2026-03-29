@@ -14,6 +14,8 @@ import AttendanceLogsPage from "./pages/AttendanceLogsPage";
 import StudentDetailsPage from "./pages/StudentDetailsPage";
 import ProfilePage from "./pages/ProfilePage";
 import AttendanceHistoryPage from "./pages/AttendanceHistoryPage";
+import LabManagementPage from "./pages/LabManagementPage";
+import ManualAttendancePage from "./pages/ManualAttendancePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +36,8 @@ const App = () => (
               <Route path="/attendance-logs" element={<AttendanceLogsPage />} />
               <Route path="/my-history" element={<AttendanceHistoryPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/lab-management" element={<LabManagementPage />} />
+              <Route path="/manual-attendance" element={<ManualAttendancePage />} />
               <Route path="/guest" element={<GuestDashboard />} />
               <Route path="/debug" element={<NetworkDebug />} />
               <Route path="*" element={<NotFound />} />

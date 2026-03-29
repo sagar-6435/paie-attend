@@ -2,6 +2,7 @@ import express from 'express';
 import AttendanceRecord from '../models/AttendanceRecord.js';
 import QRSession from '../models/QRSession.js';
 import User from '../models/User.js';
+import LabDay from '../models/LabDay.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -23,6 +24,18 @@ router.post('/', authenticate, async (req, res) => {
     const user = await User.findById(req.user.id);
     const today = new Date().toISOString().split('T')[0];
 
+    // Check if user already submitted for today
+    const existingSubmission = await AttendanceRecord.findOne({
+      studentId: req.user.id,
+      date: today
+    });
+
+    if (existingSubmission) {
+      return res.status(400).json({ 
+        error: 'You have already submitted your attendance for today. Only one submission is allowed per day.' 
+      });
+    }
+
     const record = new AttendanceRecord({
       studentId: req.user.id,
       studentName: user.name,
@@ -35,6 +48,42 @@ router.post('/', authenticate, async (req, res) => {
     await record.save();
     await QRSession.findOneAndUpdate({ sessionId }, { $inc: { attendanceCount: 1 } });
 
+    res.status(201).json(record);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Manual attendance (admin only)
+router.post('/manual', authenticate, authorize('admin'), async (req, res) => {
+  try {
+    const { studentId, date, workDone } = req.body;
+
+    const student = await User.findById(studentId);
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+
+    // Check if user already submitted for this date
+    const existingSubmission = await AttendanceRecord.findOne({
+      studentId,
+      date
+    });
+
+    if (existingSubmission) {
+      return res.status(400).json({ 
+        error: 'Attendance already exists for this student on this date.' 
+      });
+    }
+
+    const record = new AttendanceRecord({
+      studentId,
+      studentName: student.name,
+      date,
+      workDone: workDone || "Marked manually by Admin",
+      location: { lat: 0, lng: 0 }, // Manual entry location
+      isManual: true, // Flag for manual entries
+    });
+
+    await record.save();
     res.status(201).json(record);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -77,7 +126,9 @@ router.get('/', authenticate, authorize('admin'), async (req, res) => {
 router.get('/stats/all', authenticate, authorize('admin'), async (req, res) => {
   try {
     const students = await User.find({ role: 'student' });
-    const totalSessions = await QRSession.countDocuments();
+    
+    // Total Labs = Number of days marked as 'active'
+    const totalLabs = await LabDay.countDocuments({ status: 'active' });
 
     const stats = await Promise.all(
       students.map(async (student) => {
@@ -95,7 +146,8 @@ router.get('/stats/all', authenticate, authorize('admin'), async (req, res) => {
           email: student.email,
           rollNumber: student.rollNumber,
           attended,
-          percentage: totalSessions > 0 ? Math.round((attended / totalSessions) * 100) : 0,
+          percentage: totalLabs > 0 ? Math.min(Math.round((attended / totalLabs) * 100), 100) : 0,
+          totalLabs,
           lastWork: lastRecord?.workDone || 'N/A',
         };
       })

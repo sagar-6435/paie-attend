@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Send, CheckCircle2, XCircle, X, BookOpen, GraduationCap, RefreshCw } from "lucide-react";
+import { Camera, Send, CheckCircle2, XCircle, X, BookOpen, GraduationCap, RefreshCw, Coffee } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -25,7 +25,27 @@ export default function StudentDashboard() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const qrReaderRef = useRef<HTMLDivElement>(null);
 
+  const [labStatus, setLabStatus] = useState<{ status: string; message: string }>({ status: 'active', message: '' });
+  const [labLoading, setLabLoading] = useState(true);
+
   if (!user) return null;
+
+  useEffect(() => {
+    const fetchLabStatus = async () => {
+      try {
+        const { labStatusApi } = await import("@/lib/api");
+        const response = await labStatusApi.get();
+        if (response.data) {
+          setLabStatus(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch lab status");
+      } finally {
+        setLabLoading(false);
+      }
+    };
+    fetchLabStatus();
+  }, []);
 
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
@@ -276,7 +296,26 @@ export default function StudentDashboard() {
         </CardHeader>
         <CardContent>
           <AnimatePresence mode="wait">
-            {scanState === "idle" && !scannedSession && (
+            {labLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <RefreshCw className="w-8 h-8 animate-spin text-primary/40" />
+              </div>
+            ) : labStatus.status === 'holiday' ? (
+              <motion.div key="holiday" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-6 py-12 text-center">
+                <div className="w-24 h-24 rounded-full bg-warning/10 flex items-center justify-center border-4 border-warning/20">
+                  <Coffee className="w-10 h-10 text-warning" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-warning">Laboratory on Holiday</h3>
+                  <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
+                    {labStatus.message || "The lab is currently closed for a public holiday or maintenance. Scanning is disabled."}
+                  </p>
+                </div>
+                <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-widest text-warning/70 border-warning/30">
+                  Status: LOCKED
+                </Badge>
+              </motion.div>
+            ) : scanState === "idle" && !scannedSession && (
               <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-4 py-6">
                 <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-primary/40 flex items-center justify-center relative overflow-hidden">
                   <Camera className="w-12 h-12 text-primary/40" />
@@ -288,7 +327,7 @@ export default function StudentDashboard() {
                 <p className="text-xs text-muted-foreground">Point camera at admin's QR code</p>
               </motion.div>
             )}
-            {scanState === "scanning" && (
+            {labStatus.status === 'active' && scanState === "scanning" && (
               <motion.div key="scanning" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-4">
                 <div ref={qrReaderRef} id="qr-reader" className="w-full rounded-2xl overflow-hidden border-2 border-primary" style={{ minHeight: "300px" }} />
                 {cameraError && (

@@ -18,13 +18,14 @@ import {
   AlertCircle,
   RefreshCw,
   Eye,
-  EyeOff
+  EyeOff,
+  GraduationCap
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function ProfilePage() {
-  const { user, login } = useAuth();
+  const { user, login, updateUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -85,13 +86,8 @@ export default function ProfilePage() {
         toast.success("Profile updated successfully!");
         setFormData(prev => ({ ...prev, password: "", confirmPassword: "" }));
         
-        // Refresh local auth state (depends on how auth-context handles user updates)
-        // For simplicity, we just trigger a toast - in a production app, we'd update context
-        if (login && response.data) {
-          // If our context supports it - or we could just tell user to refresh
-          // For now, let's assume the context updates or we suggest refresh
-          toast.info("Some changes may require refresh to show everywhere.");
-        }
+        // Use the new updateUser to sync context immediately
+        updateUser(response.data as any);
       } else {
         toast.error(response.error);
       }
@@ -124,13 +120,25 @@ export default function ProfilePage() {
                     {user.name.charAt(0)}
                   </div>
                   <h2 className="text-xl font-bold">{user.name}</h2>
-                  <Badge variant="outline" className="mt-1 font-mono">{user.rollNumber || 'GUEST'}</Badge>
+                  <Badge variant="outline" className="mt-1 font-mono">{user.role === 'admin' ? 'ADMINISTRATOR' : (user.rollNumber || 'GUEST')}</Badge>
                   <p className="text-xs text-muted-foreground mt-2">{user.email}</p>
                   
-                  <div className="mt-8 pt-8 border-t border-border/50 w-full flex justify-center">
-                    <div className="flex items-center gap-2 text-primary/60">
-                      <ShieldCheck className="w-4 h-4" />
-                      <span className="text-[10px] uppercase font-bold tracking-widest">{user.role} Verified</span>
+                  <div className="mt-8 pt-8 border-t border-border/50 w-full">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center justify-between px-2">
+                        <span className="text-[10px] font-black tracking-widest text-muted-foreground uppercase">Account Type</span>
+                        <Badge className="gradient-primary border-none text-[10px] font-bold px-2 py-0">OFFICIAL</Badge>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                        {user.role === 'admin' ? (
+                          <ShieldCheck className="w-5 h-5 text-primary" />
+                        ) : user.role === 'student' ? (
+                          <GraduationCap className="w-5 h-5 text-primary" />
+                        ) : (
+                          <Eye className="w-5 h-5 text-primary" />
+                        )}
+                        <span className="text-sm font-black uppercase tracking-wider text-primary">{user.role}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

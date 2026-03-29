@@ -112,4 +112,20 @@ export const attendanceApi = {
     apiCall(`/attendance/student/${studentId}`),
 
   getStats: () => apiCall('/attendance/stats/all'),
+
+  manualRecord: (studentId: string, date: string, workDone: string) =>
+    apiCall('/attendance/manual', {
+      method: 'POST',
+      body: JSON.stringify({ studentId, date, workDone }),
+    }),
+};
+
+// Lab Status API
+export const labStatusApi = {
+  get: () => apiCall<{ status: string; message: string }>('/lab-status'),
+  update: (status: 'active' | 'holiday', message?: string) =>
+    apiCall('/lab-status', {
+      method: 'PATCH',
+      body: JSON.stringify({ status, message }),
+    }),
 };

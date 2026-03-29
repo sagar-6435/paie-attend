@@ -5,10 +5,20 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, RefreshCw, ClipboardList, TrendingUp, CheckCircle2, LayoutDashboard } from "lucide-react";
-import { motion } from "framer-motion";
+import { Calendar, FileText, RefreshCw, ClipboardList, TrendingUp, CheckCircle2, LayoutDashboard, Download, Search } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Navigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import * as XLSX from 'xlsx';
 
 export default function AttendanceLogsPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -34,11 +44,38 @@ export default function AttendanceLogsPage() {
     }
   }, []);
 
+  const handleExport = () => {
+    if (dailyAttendance.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+
+    const exportData = dailyAttendance.map(record => ({
+      'Student Name': record.studentId?.name || record.studentName,
+      'Roll Number': record.studentId?.rollNumber || "N/A",
+      'Date': selectedDate,
+      'Sync Time': new Date(record.timestamp).toLocaleTimeString(),
+      'Work Reported': record.workDone
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Attendance Logs");
+    XLSX.writeFile(wb, `Attendance_Logs_${selectedDate}.xlsx`);
+    toast.success("Excel file downloaded successfully");
+  };
+
   useEffect(() => {
     if (isAuthenticated && user?.role === "admin") {
       fetchDailyLogs(selectedDate);
+      
+      // Auto-refresh logs every 5 seconds only for today's date
+      if (selectedDate === todayDate) {
+        const interval = setInterval(() => fetchDailyLogs(selectedDate), 5000);
+        return () => clearInterval(interval);
+      }
     }
-  }, [selectedDate, fetchDailyLogs, isAuthenticated, user]);
+  }, [selectedDate, todayDate, fetchDailyLogs, isAuthenticated, user]);
 
   if (authLoading) return null;
   if (!isAuthenticated || user?.role !== "admin") return <Navigate to="/" replace />;
@@ -72,6 +109,16 @@ export default function AttendanceLogsPage() {
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
             />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="h-9 gap-2 glass-card hover:bg-primary hover:text-primary-foreground transition-all"
+              onClick={handleExport}
+              disabled={dailyAttendance.length === 0}
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Export to Excel</span>
+            </Button>
           </div>
         </div>
 
@@ -108,7 +155,12 @@ export default function AttendanceLogsPage() {
           <CardHeader className="pb-3 border-b border-border/50 bg-muted/20">
             <CardTitle className="text-lg flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-primary" />
-              Detailed Activity for {selectedDate}
+              Verified Laboratory Activity Overview - {selectedDate}
+              {selectedDate === todayDate && (
+                <Badge variant="outline" className="ml-2 animate-pulse bg-primary/10 text-primary border-primary/20 text-[10px] py-0 px-2">
+                  LIVE
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
@@ -127,40 +179,53 @@ export default function AttendanceLogsPage() {
                   <p className="text-sm">There are no attendance records registered for this date.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-3">
-                  {dailyAttendance.map((record, i) => (
-                    <motion.div
-                      key={record._id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.03 }}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl bg-muted/20 border border-border/50 hover:border-primary/40 transition-all hover:bg-muted/40 group shadow-sm hover:shadow-primary/5"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold group-hover:bg-primary group-hover:text-primary-foreground transition-all transform group-hover:scale-105 shadow-soft">
-                          {(record.studentId?.name || record.studentName || "?").charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-base group-hover:text-primary transition-colors">{record.studentId?.name || record.studentName}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="font-mono text-[10px] bg-background px-1.5">{record.studentId?.rollNumber || "N/A"}</Badge>
-                            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                              <RefreshCw className="w-2.5 h-2.5" />
-                              Synced at {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-4 sm:mt-0 max-w-sm p-3 rounded-xl bg-background/50 border border-border/40 text-sm leading-relaxed flex items-start gap-3">
-                        <FileText className="w-4 h-4 mt-0.5 text-accent flex-shrink-0" />
-                        <div className="flex-1">
-                          <p className="text-[10px] font-bold text-accent uppercase tracking-wider mb-0.5">Reported Work</p>
-                          <p className="text-xs text-muted-foreground italic font-medium">{record.workDone}</p>
-                        </div>
-                        <CheckCircle2 className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </motion.div>
-                  ))}
+                <div className="rounded-xl border border-border/50 overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-muted/30">
+                      <TableRow>
+                        <TableHead className="w-[200px] font-bold">Student</TableHead>
+                        <TableHead className="w-[120px] font-bold">Roll Number</TableHead>
+                        <TableHead className="w-[120px] font-bold text-center">Attendance Time</TableHead>
+                        <TableHead className="font-bold">Proposed Work / Learning Log</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <AnimatePresence mode="popLayout">
+                        {dailyAttendance.map((record, i) => (
+                          <TableRow key={record._id} className="group hover:bg-muted/40 transition-colors">
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                                  {(record.studentId?.name || record.studentName || "?").charAt(0)}
+                                </div>
+                                <span className="group-hover:text-primary transition-colors">
+                                  {record.studentId?.name || record.studentName}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="font-mono text-[10px] bg-background">
+                                {record.studentId?.rollNumber || "N/A"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <span className="text-[11px] text-muted-foreground font-medium">
+                                {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-start gap-2 max-w-xl">
+                                <FileText className="w-3.5 h-3.5 mt-0.5 text-accent shrink-0" />
+                                <p className="text-xs text-muted-foreground italic line-clamp-2 group-hover:line-clamp-none transition-all">
+                                  {record.workDone}
+                                </p>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </AnimatePresence>
+                    </TableBody>
+                  </Table>
                 </div>
               )}
             </div>

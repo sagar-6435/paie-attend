@@ -122,7 +122,7 @@ export default function LoginPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate("/guest")}
+                onClick={() => quickLogin("guest@paie.club")}
                 className="flex flex-col items-center gap-1 h-auto py-3"
               >
                 <Eye className="w-4 h-4 text-muted-foreground" />
