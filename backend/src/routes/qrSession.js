@@ -43,7 +43,7 @@ router.get('/', authenticate, async (req, res) => {
 // Get session by ID
 router.get('/:id', authenticate, async (req, res) => {
   try {
-    const session = await QRSession.findById(req.params.id).populate('createdBy', 'name email');
+    const session = await QRSession.findOne({ sessionId: req.params.id }).populate('createdBy', 'name email');
     
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
@@ -58,8 +58,8 @@ router.get('/:id', authenticate, async (req, res) => {
 // Mark session as used
 router.patch('/:id/use', authenticate, async (req, res) => {
   try {
-    const session = await QRSession.findByIdAndUpdate(
-      req.params.id,
+    const session = await QRSession.findOneAndUpdate(
+      { sessionId: req.params.id },
       { used: true },
       { new: true }
     );

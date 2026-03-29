@@ -11,7 +11,7 @@ router.post('/', authenticate, async (req, res) => {
   try {
     const { sessionId, workDone, location } = req.body;
 
-    const session = await QRSession.findById(sessionId);
+    const session = await QRSession.findOne({ sessionId });
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
@@ -33,7 +33,7 @@ router.post('/', authenticate, async (req, res) => {
     });
 
     await record.save();
-    await QRSession.findByIdAndUpdate(sessionId, { $inc: { attendanceCount: 1 } });
+    await QRSession.findOneAndUpdate({ sessionId }, { $inc: { attendanceCount: 1 } });
 
     res.status(201).json(record);
   } catch (error) {
