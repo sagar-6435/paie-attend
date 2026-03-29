@@ -51,8 +51,9 @@ router.get('/:id', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'Session not found' });
     }
 
-    // Explicitly check if expired
-    if (new Date() > session.expiresAt) {
+    // Explicitly check if expired with 5s grace period
+    const gracePeriod = 5000; // 5 seconds
+    if (new Date(Date.now() - gracePeriod) > session.expiresAt) {
       return res.status(410).json({ error: 'This QR code has expired. Please ask the admin to generate a new one.' });
     }
 

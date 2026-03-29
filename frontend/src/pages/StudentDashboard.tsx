@@ -129,6 +129,10 @@ export default function StudentDashboard() {
         const response = await qrSessionApi.getById(sessionId);
         if (response.error) {
           toast.error("Invalid QR code or session expired");
+          // Resume scanner so user can try again
+          if (scannerRef.current) {
+            try { scannerRef.current.resume(); } catch (e) {}
+          }
           return;
         }
 
@@ -145,6 +149,9 @@ export default function StudentDashboard() {
         }
       } catch (error) {
         toast.error("Invalid QR code format.");
+        if (scannerRef.current) {
+          try { scannerRef.current.resume(); } catch (e) {}
+        }
       }
     };
 

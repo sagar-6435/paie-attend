@@ -31,7 +31,7 @@ export default function AdminDashboard() {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setAdminLocation(loc);
         if (user) {
-          const result = await generateQR(loc, user.id, 45); // Set to 45 seconds
+          const result = await generateQR(loc, user.id, 60); // Extended to 60 seconds
           setLocationStatus(result.success ? "success" : "error");
         }
       },
@@ -39,7 +39,7 @@ export default function AdminDashboard() {
         const fallback = { lat: 28.6139, lng: 77.209 };
         setAdminLocation(fallback);
         if (user) {
-          const result = await generateQR(fallback, user.id, 45); // Set to 45 seconds
+          const result = await generateQR(fallback, user.id, 60); // Extended to 60 seconds
           setLocationStatus(result.success ? "success" : "error");
         }
       }
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
                     </span>
                     <span className="text-muted-foreground">remaining</span>
                   </div>
-                  <Progress value={(timeLeft / 45) * 100} className="w-48 mt-2 h-2" />
+                  <Progress value={(timeLeft / 60) * 100} className="w-48 mt-2 h-2" />
                 </div>
               )}
 

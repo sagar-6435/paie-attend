@@ -23,7 +23,7 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
   const [activeSession, setActiveSession] = useState<QRSession | null>(null);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>(MOCK_ATTENDANCE);
 
-  const generateQR = useCallback(async (location: { lat: number; lng: number }, adminId: string, expiresIn: number = 30) => {
+  const generateQR = useCallback(async (location: { lat: number; lng: number }, adminId: string, expiresIn: number = 60) => {
     try {
       const response = await qrSessionApi.create(location, expiresIn);
       if (response.error) {
