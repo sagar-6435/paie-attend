@@ -2,11 +2,12 @@ import { ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { QrCode, LayoutDashboard, LogOut, Shield, GraduationCap, Users } from "lucide-react";
+import { QrCode, LayoutDashboard, LogOut, Shield, GraduationCap, Users, ClipboardList } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -43,17 +44,31 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </button>
           
           {user?.role === "admin" && (
-            <button 
-              onClick={() => navigate("/students")}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                location.pathname === "/students" 
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground" 
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              Students
-            </button>
+            <>
+              <button 
+                onClick={() => navigate("/students")}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname === "/students" 
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                Students
+              </button>
+
+              <button 
+                onClick={() => navigate("/attendance-logs")}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname === "/attendance-logs" 
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                }`}
+              >
+                <ClipboardList className="w-4 h-4" />
+                Attendance Logs
+              </button>
+            </>
           )}
         </nav>
 
