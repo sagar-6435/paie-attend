@@ -26,7 +26,7 @@ router.post('/', authenticate, async (req, res) => {
     const record = new AttendanceRecord({
       studentId: req.user.id,
       studentName: user.name,
-      sessionId,
+      sessionId: session._id,
       date: today,
       workDone,
       location,

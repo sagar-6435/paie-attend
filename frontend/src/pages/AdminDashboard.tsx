@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { QrCode, MapPin, Users, Clock, RefreshCw, CheckCircle2, FileText } from "lucide-react";
+import { QrCode, MapPin, Users, Clock, RefreshCw, CheckCircle2, FileText, Search, Calendar } from "lucide-react";
+import { attendanceApi } from "@/lib/api";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 export default function AdminDashboard() {
@@ -21,7 +23,32 @@ export default function AdminDashboard() {
 
   const navigate = useNavigate();
   const stats = getAllStudentsStats();
-  const todayCount = attendance.filter((a) => a.date === new Date().toISOString().split("T")[0]).length;
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [dailyAttendance, setDailyAttendance] = useState<any[]>([]);
+  const [isLogsLoading, setIsLogsLoading] = useState(false);
+
+  const fetchDailyLogs = useCallback(async (date: string) => {
+    setIsLogsLoading(true);
+    try {
+      const response = await attendanceApi.getAll(undefined, date);
+      if (response.data) {
+        setDailyAttendance(response.data as any[]);
+      }
+    } catch (error) {
+      toast.error("Failed to load attendance logs");
+    } finally {
+      setIsLogsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDailyLogs(selectedDate);
+  }, [selectedDate, fetchDailyLogs]);
+
+  const todayDate = new Date().toISOString().split("T")[0];
+  const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+
+  const todayCount = attendance.filter((a) => a.date === todayDate).length;
 
   const handleGenerateQR = useCallback(async () => {
     setLocationStatus("loading");
@@ -204,6 +231,80 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
+      {/* Attendance Activity Logs */}
+      <Card className="glass-card">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary" />
+            Attendance Activity
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <div className="flex bg-muted p-1 rounded-lg text-xs">
+              <button 
+                onClick={() => setSelectedDate(todayDate)}
+                className={`px-3 py-1 rounded-md transition-all ${selectedDate === todayDate ? 'bg-background shadow-sm font-bold text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Today
+              </button>
+              <button 
+                onClick={() => setSelectedDate(yesterdayDate)}
+                className={`px-3 py-1 rounded-md transition-all ${selectedDate === yesterdayDate ? 'bg-background shadow-sm font-bold text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Yesterday
+              </button>
+            </div>
+            <Input 
+              type="date" 
+              className="h-8 text-xs w-32" 
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {isLogsLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <RefreshCw className="w-8 h-8 animate-spin mb-2 text-primary" />
+                <p>Fetching logs...</p>
+              </div>
+            ) : dailyAttendance.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
+                <Calendar className="w-10 h-10 mb-2 opacity-20" />
+                <p>No attendance records for {selectedDate}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-2">
+                {dailyAttendance.map((record, i) => (
+                  <motion.div
+                    key={record._id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-muted/30 border border-border/50 hover:border-primary/30 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        {(record.studentId?.name || record.studentName || "?").charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-bold">{record.studentId?.name || record.studentName}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono">
+                          {record.studentId?.rollNumber || "N/A"} • {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-2 sm:mt-0 max-w-sm truncate text-xs text-muted-foreground italic flex items-center gap-1">
+                      <FileText className="w-3 h-3" />
+                      {record.workDone}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
