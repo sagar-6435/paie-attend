@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useAttendance } from "@/lib/attendance-context";
 import { getStudentAttendance, getStudentAttendancePercentage, TOTAL_SESSIONS } from "@/lib/mock-data";
 import { qrSessionApi } from "@/lib/api";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5Qrcode } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ export default function StudentDashboard() {
   const [submitResult, setSubmitResult] = useState<{ success: boolean; error?: string } | null>(null);
   const [manualSessionId, setManualSessionId] = useState("");
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
   const qrReaderRef = useRef<HTMLDivElement>(null);
 
   if (!user) return null;
@@ -32,62 +32,81 @@ export default function StudentDashboard() {
   const percentage = getStudentAttendancePercentage(user.id);
 
   useEffect(() => {
-    if (scanState === "scanning" && qrReaderRef.current) {
-      const scanner = new Html5QrcodeScanner(
-        "qr-reader",
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-          disableFlip: false,
-        },
-        false
-      );
+    let html5QrCode: Html5Qrcode | null = null;
 
-      scanner.render(
-        async (decodedText) => {
-          try {
-            // Parse the QR data
-            const qrData = JSON.parse(decodedText);
-            const sessionId = qrData.sessionId;
-
-            // Verify session exists and is active
-            const response = await qrSessionApi.getById(sessionId);
-            if (response.error) {
-              toast.error("Invalid QR code or session expired");
-              return;
-            }
-
-            if (response.data) {
-              await fetchActiveSession(sessionId);
-              setScannedSession(sessionId);
-              setScanState("scanned");
-              scanner.clear().catch(() => {});
-              scannerRef.current = null;
-              toast.success("QR scanned successfully!");
-            }
-          } catch (error) {
-            console.error("QR parsing error:", error);
-            toast.error("Failed to parse QR code. Try again.");
-          }
-        },
-        (error) => {
-          // Ignore scanning errors - these are normal during scanning
-          console.debug("Scanning:", error);
+    const startScanner = async () => {
+      if (scanState === "scanning" && qrReaderRef.current) {
+        // Ensure HTTPS for production
+        if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+          setCameraError("Camera access requires a secure (HTTPS) connection.");
+          toast.error("Camera requires HTTPS. Use manual entry.");
+          setScanState("idle");
+          return;
         }
-      ).catch((err) => {
-        console.error("Scanner initialization error:", err);
-        setCameraError(err.message || "Unable to access camera");
-        toast.error("Camera access denied. Use manual entry instead.");
-      });
 
-      scannerRef.current = scanner;
-    }
+        try {
+          html5QrCode = new Html5Qrcode("qr-reader");
+          scannerRef.current = html5QrCode;
+
+          const config = { 
+            fps: 10, 
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0 
+          };
+
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            async (decodedText) => {
+              try {
+                const qrData = JSON.parse(decodedText);
+                const sessionId = qrData.sessionId;
+
+                const response = await qrSessionApi.getById(sessionId);
+                if (response.error) {
+                  toast.error("Invalid QR code or session expired");
+                  return;
+                }
+
+                if (response.data) {
+                  await fetchActiveSession(sessionId);
+                  setScannedSession(sessionId);
+                  setScanState("scanned");
+                  
+                  if (scannerRef.current) {
+                    await scannerRef.current.stop();
+                    scannerRef.current = null;
+                  }
+                  toast.success("QR scanned successfully!");
+                }
+              } catch (error) {
+                console.error("QR parsing error:", error);
+                toast.error("Failed to parse QR code. Try again.");
+              }
+            },
+            () => {} // silent on scan failures
+          );
+        } catch (err: any) {
+          console.error("Scanner error:", err);
+          let message = "Unable to access camera";
+          if (err.name === "NotAllowedError") message = "Camera permission denied";
+          if (err.name === "NotFoundError") message = "No camera found on this device";
+          
+          setCameraError(message);
+          toast.error(message);
+          // Try to clean up
+          if (html5QrCode) {
+            try { await html5QrCode.clear(); } catch(e) {}
+          }
+        }
+      }
+    };
+
+    startScanner();
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(() => {});
-        scannerRef.current = null;
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(console.error);
       }
     };
   }, [scanState, fetchActiveSession]);
