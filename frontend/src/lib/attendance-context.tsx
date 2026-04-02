@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from "react";
 import { QRSession, AttendanceRecord, MOCK_ATTENDANCE } from "./mock-data";
 import { qrSessionApi, attendanceApi } from "./api";
+import { useAuth } from "./auth-context";
 
 interface AttendanceContextType {
   activeSession: QRSession | null;
@@ -20,6 +21,7 @@ interface AttendanceContextType {
 const AttendanceContext = createContext<AttendanceContextType | null>(null);
 
 export function AttendanceProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuth();
   const [activeSession, setActiveSession] = useState<QRSession | null>(null);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>(MOCK_ATTENDANCE);
 
@@ -133,21 +135,13 @@ export function AttendanceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Initial fetch and global polling
-  useState(() => {
-    fetchDailyAttendance();
-    const interval = setInterval(fetchDailyAttendance, 5000);
-    // Cleanup is tricky in a useState initializer but for this singleton context it's fine.
-    // Better to use useEffect.
-  });
-
-  // Re-implementing with useEffect for proper cleanup
-  const [hasFetched, setHasFetched] = useState(false);
-  useState(() => setHasFetched(true)); // Hack to trigger effect on mount
-
   useEffect(() => {
-    const interval = setInterval(fetchDailyAttendance, 5000);
-    return () => clearInterval(interval);
-  }, [fetchDailyAttendance]);
+    if (isAuthenticated) {
+      fetchDailyAttendance();
+      const interval = setInterval(fetchDailyAttendance, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, fetchDailyAttendance]);
 
   return (
     <AttendanceContext.Provider value={{ activeSession, attendance, generateQR, submitAttendance, getTimeRemaining, fetchActiveSession }}>

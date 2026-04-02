@@ -190,5 +190,3 @@ export default function AttendanceHistoryPage() {
     </DashboardLayout>
   );
 }
-
-import { Button } from "@/components/ui/button";

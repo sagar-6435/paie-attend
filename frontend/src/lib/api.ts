@@ -30,10 +30,13 @@ const apiCall = async <T>(
     const data = await response.json();
 
     if (!response.ok) {
-      if (response.status === 401) {
+      if (response.status === 401 && token) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.reload();
+        // Only reload if we are not on the login page to avoid infinite loops
+        if (window.location.pathname !== '/') {
+          window.location.reload();
+        }
       }
       return { error: data.error || 'An error occurred' };
     }
